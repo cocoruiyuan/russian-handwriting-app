@@ -177,36 +177,99 @@ def draw_handwritten_line(
     ink_name: str,
     randomness: int,
 ) -> None:
-    temp_draw = ImageDraw.Draw(page)
-    text_width = int(temp_draw.textlength(text, font=font)) + 60
-    text_height = font.size * 2 + 40
+    # 先用三倍尺寸绘制，再缩小，使笔画边缘更自然
+    scale = 3
+    high_font = font.font_variant(size=font.size * scale)
 
-    line_image = Image.new("RGBA", (max(1, text_width), max(1, text_height)), (0, 0, 0, 0))
+    measuring_image = Image.new("RGBA", (10, 10), (0, 0, 0, 0))
+    measuring_draw = ImageDraw.Draw(measuring_image)
+
+    bbox = measuring_draw.textbbox(
+        (0, 0),
+        text,
+        font=high_font,
+    )
+
+    padding = 18 * scale
+
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+
+    line_image = Image.new(
+        "RGBA",
+        (
+            max(1, text_width + padding * 2),
+            max(1, text_height + padding * 2),
+        ),
+        (0, 0, 0, 0),
+    )
+
     line_draw = ImageDraw.Draw(line_image)
 
-    current_x = 12
+    ink_color = varied_ink_color(ink_name)
+    ink_alpha = random.randint(225, 250)
 
-    for char in text:
-        char_color = varied_ink_color(ink_name)
-        char_y_shift = random.randint(-1 - randomness, 1 + randomness)
+    # 整行一次性绘制，保留字体的字距、连笔和整体形状
+    line_draw.text(
+        (
+            padding - bbox[0],
+            padding - bbox[1],
+        ),
+        text,
+        font=high_font,
+        fill=(
+            ink_color[0],
+            ink_color[1],
+            ink_color[2],
+            ink_alpha,
+        ),
+    )
 
-        line_draw.text(
-            (current_x, 12 + char_y_shift),
-            char,
-            font=font,
-            fill=char_color,
-        )
+    # 每一行的宽度和高度有非常轻微的变化
+    width_change = random.uniform(
+        0.99 - randomness * 0.002,
+        1.01 + randomness * 0.002,
+    )
 
-        char_width = line_draw.textlength(char, font=font)
-        current_x += int(char_width) + random.randint(0, 1)
+    height_change = random.uniform(
+        0.995 - randomness * 0.001,
+        1.005 + randomness * 0.001,
+    )
 
-    angle = random.uniform(-0.6 - randomness * 0.2, 0.6 + randomness * 0.2)
-    rotated = line_image.rotate(angle, expand=True, resample=Image.Resampling.BICUBIC)
+    new_width = max(
+        1,
+        int(line_image.width / scale * width_change),
+    )
 
-    paste_x = max(0, x)
-    paste_y = max(0, y)
+    new_height = max(
+        1,
+        int(line_image.height / scale * height_change),
+    )
 
-    page.alpha_composite(rotated, (paste_x, paste_y))
+    line_image = line_image.resize(
+        (new_width, new_height),
+        Image.Resampling.LANCZOS,
+    )
+
+    # 只做很轻微的整行倾斜
+    angle = random.uniform(
+        -0.18 - randomness * 0.04,
+        0.18 + randomness * 0.04,
+    )
+
+    line_image = line_image.rotate(
+        angle,
+        expand=True,
+        resample=Image.Resampling.BICUBIC,
+    )
+
+    paste_x = max(0, x + random.randint(-2, 2))
+    paste_y = max(0, y + random.randint(-2, 2))
+
+    page.alpha_composite(
+        line_image,
+        (paste_x, paste_y),
+    )
 
 
 def render_page(
