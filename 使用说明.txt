@@ -1,0 +1,30 @@
+俄语手写图片生成器：优化版
+========================
+
+使用方法：
+
+1. 把支持俄语的 .ttf 或 .otf 手写字体放进 fonts 文件夹。
+
+2. 打开项目文件夹，在地址栏输入 cmd 并回车。
+
+3. 激活虚拟环境：
+
+.venv\Scripts\activate
+
+4. 安装或更新依赖：
+
+python -m pip install -r requirements.txt
+
+5. 启动程序：
+
+python -m streamlit run app.py
+
+本版本增加：
+- 自动分页
+- 多字体选择
+- 字体缓存
+- 更快的纸张纹理
+- 多页 PNG ZIP 下载
+- PDF 下载
+- 随机种子
+- 最多预览前 5 页
