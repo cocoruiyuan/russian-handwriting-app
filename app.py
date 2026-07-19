@@ -16,9 +16,15 @@ BOTTOM_MARGIN = 110
 
 
 def find_font() -> Path | None:
-    """Find the first .ttf or .otf font placed in the fonts folder."""
-    font_dir = Path(__file__).parent / "fonts"
-    font_files = list(font_dir.glob("*.ttf")) + list(font_dir.glob("*.otf"))
+    base_dir = Path(__file__).resolve().parent
+
+    font_files = (
+        list(base_dir.rglob("*.ttf"))
+        + list(base_dir.rglob("*.otf"))
+        + list(base_dir.rglob("*.TTF"))
+        + list(base_dir.rglob("*.OTF"))
+    )
+
     return font_files[0] if font_files else None
 
 
